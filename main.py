@@ -48,38 +48,66 @@ figure_title = 'Running score of test_RRV4_action'
 avg_file = os.path.dirname(__file__)+'/plotPPO/test_RRV4_avg_action.png'
 avg_title = 'Running average of test_RRV4_avg_action'
 
-name = '8.pth'
+name = '_v1.pth'
 # name = None
 save_name = '_v3.pth'
 
-N_game = int(3e6)
-A_LR = 3e-4
-C_LR = 1e-3
-Q_LR = 2e-4
-Alpha_LR = 2e-5
+############################ PPO hyper-parameter #####################
+# N_game = int(3e6)
+# A_LR = 3e-4
+# C_LR = 1e-3
+# sigma = 0.01 
+# gae_lamda = 0.95
+# gamma = 0.99
+# tau = 0.01
+# max_size = 100000
+# batch_size = 128
+# EP_LEN = 1000
+# n_eopc = 80
+# min_size = 1000
+# epsloion = 0.2
+# path = os.path.dirname(__file__)+'/PPO/'
+
+
+# save_freq = int(1e5)
+# update_timestep = EP_LEN * 4
+# print_freq = EP_LEN * 4
+# decy_std = int(2e5)
+# action_std = 0.5
+# std_rate = 0.05
+# min_std = 0.1
+
+#########################################
+
+#################### SAC parameter #############################
+N_game = int(0.3e6)
+A_LR = 1e-4
+C_LR = 2e-4
+Alpha_LR = 2e-4
 sigma = 0.01 
-gae_lamda = 0.95
+gae_lamda = 0.9
 gamma = 0.99
 tau = 0.01
-sigma_min = 1e-4
-sigma_max = 0.2
 max_size = 100000
 batch_size = 128
 EP_LEN = 1000
-n_eopc = 80
+n_eopc = 10
 min_size = 1000
-epsloion = 0.2
 target_entropy = -n_action
+epsloion = 0.2
+std_min = 1e-4
+std_max = 1
 path = os.path.dirname(__file__)+'/SAC/'
 
-save_freq = int(1e5)
-update_timestep = EP_LEN * 4
-print_freq = EP_LEN * 4
-decy_std = int(2e5)
+save_freq = int(0.5e5)
+update_timestep = EP_LEN 
+print_freq = EP_LEN 
+decy_std = int(0.5e5)
 action_std = 0.5
-std_rate = 0.05
-min_std = 0.1
+std_rate = 0.1
+min_std = 0.2
 
+##############################################################
 
 if __name__ == "__main__":
     best_score = -1000000 
@@ -88,13 +116,13 @@ if __name__ == "__main__":
     #             ,norm_adv=True,epslion=epsloion,n_epoch=n_eopc,batch_size=batch_size,entropy_cofe=0.01
     #             ,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,save_name=save_name,load_name=name,path=path)
     
-    # agent = SAC(n_state,n_action,low,high,None,None,target_entropy,A_LR,C_LR,gamma = gamma,alpha_LR=Alpha_LR,tau=tau,
-    #             max_size = max_size,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,save_name=save_name,load_name=name,path=path,batch_size = batch_size)
+    agent = SAC(n_state,n_action,low,high,None,None,target_entropy,A_LR,C_LR,std_min=std_min,std_max=std_max
+                ,gamma = gamma,alpha_LR=Alpha_LR,tau=tau,max_size=max_size,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,
+                save_name=save_name,load_name=name,path=path,batch_size = batch_size)
     
-
     
-    # time_step = 0
-    # i_episode = 0
+    time_step = 0
+    i_episode = 0
     
     # # for PPO on-policy method
     # while time_step <= N_game:
@@ -150,53 +178,64 @@ if __name__ == "__main__":
     # plot_runing_avg_learning_curve(x,score_history,avg_title,avg_file)
     
     
-    # for SAC off-policy method
-    # for _ in range(N_game):
-    #     s = env.reset() 
-    #     done = False
-    #     start = True
-    #     reward = 0
-    #     # if (_+1) % 10 == 0:
+    # for SAC DDPG off-policy method
+    # while time_step <= N_game:
+    #     s = env.reset()
+    #     # done = False
+    #     rewards = 0
     #     t0 = time.time()
-    #     while not done:
-    #         # env.render()
+    #     for t in range(1,EP_LEN+1):
+            
     #         a = agent.choose_action(s)
     #         s_,r,done = env.step(a)
-    #         reward += r
+            
+    #         #store_trainstion
     #         agent.store_transition(s,a,r,s_,done)
-              
-    #         agent.learn()    
-    #         # if done:
-    #         #     start = False
-    #         #     break
+            
+    #         rewards += r
+    #         time_step += 1
+    #         #update SAC
+    #         if agent.memory.memory_counter >= min_size:
+    #             agent.learn()
+                
+    #         if time_step % print_freq == 0:
+    #             print_score = round(avg_score,4)
+                
+    #             print("Episode : {} \t\t Timestep : {} \t\t Average Reward : {}".format(i_episode, time_step, print_score))
+            
+    #         if time_step % decy_std == 0:
+    #             agent.decay_std_max(std_rate,min_std)
+            
+    #         if time_step % save_freq == 0:
+    #             # if rewards > best_score:
+    #                 best_score = rewards
+    #                 print("--------------------------------------------------------------------------------------------")
+    #                 agent.save_model()
+    #                 print("----------------- best_score -------------------- %.3f" % best_score)
+                    
+    #         if done:
+    #             break 
+            
     #         s = s_
+                    
+    #     i_episode += 1          
+    #     score_history.append(rewards)
+    #     avg_score = np.mean(score_history[-update_timestep:])
 
-    #     score_history.append(reward)
-    #     avg_score = np.mean(score_history[-100:])
-            
-    #     if reward > best_score:
-    #         best_score = reward
-    #         agent.save_model()
-    #         print("----------------- best_score -------------------- %.3f" % best_score)
-            
-    #     # if (_+1) % 10 == 0:
-    #     t = time.time() - t0 
-    #     print('epoisode each 10 run:',_,'score :%.1f' % reward,'avg score %.1f' % avg_score ,'time %.2f' % t)
-            
     # x = [i+1 for i in range(len(score_history))]
     # plot_learning_curve(x,score_history,figure_title,figure_file)
     # plot_runing_avg_learning_curve(x,score_history,avg_title,avg_file)
     
     # test
-    # agent.load_model()
-    # epoc = 1000
-    # while epoc > 0:
-    #     s = env.reset()
-    #     done = False
-    #     while not done:
-    #         env.render()
-    #         a = agent.choose_action(s)
-    #         s_,r,done = env.step(a)
-    #         if done:
-    #             print(done)
-    #         s = s_
+    agent.load_model()
+    epoc = 1000
+    while epoc > 0:
+        s = env.reset()
+        done = False
+        while not done:
+            env.render()
+            a = agent.choose_action(s)
+            s_,r,done = env.step(a)
+            if done:
+                print(done)
+            s = s_
