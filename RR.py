@@ -26,6 +26,7 @@ eye = np.eye
 class RR(object):
     def __init__(self,L1 = 10,L2 = 10,m1 = 0.5 , m2 = 0.5 , I1 = eye(3) ,I2 = eye(3)):
         #self.dt = 0.002 #1ms
+        self.dt = 0.04
         self.L1 = L1
         self.L2 = L2
         self.m1 = m1
@@ -276,6 +277,7 @@ class RR(object):
         if round(sin(theta * pi),4) != round(0.000,4):
             u = 2 * sin(theta)
             kx = (D[2,1] - D[1,2]) / u
+            ky = (D[0,2] - D[2,0]) / u
             kz = (D[1,0] - D[0,1]) / u
         else:
             u = 0.001
@@ -286,8 +288,9 @@ class RR(object):
         OUTs= np.zeros((step + 1,4,4))
         rates = np.arange(0,1+1/step,1/step)
         us = np.ones((step+1))
-        Cs = cos(rates)
-        Ss = sin(rates)
+        rates_theta = rates * theta
+        Cs = cos(rates_theta)
+        Ss = sin(rates_theta)
         Vs = 1 - Cs
 
         dxs = rates * D[0,3]
@@ -379,7 +382,7 @@ class RR(object):
         goal_rads = np.zeros(2)
 
         goal_rads[0] = degTrad(1)
-        goal_rads[1] = degTrad(1)
+        goal_rads[1] = degTrad(-1)
 
         alpha = 0.98
 
@@ -393,7 +396,8 @@ class RR(object):
             if (error <= 0.001) or (iter == 0):
                 break
 
-            J = self.Get_J(Pos)
+            # J = self.Get_J(Pos)
+            J = self.Jacoiban(goal_rads,Pos)
             #V = Jw w = (J)-1 * V
             w = np.linalg.pinv(J) @ V
             goal_rads = goal_rads +  alpha * w  
@@ -429,7 +433,7 @@ class RR(object):
             #V = Jw w = (J)-1 * V
             w = np.linalg.pinv(J) @ V
             goal_rads = goal_rads +  alpha * w
-            print(goal_rads)  
+            # print(goal_rads)  
 
         print("iter",iter)
         return goal_rads
@@ -630,7 +634,18 @@ class RR(object):
         display(self.__V)
         display(self.__G)
     
-
+    def Calvel(self,src):
+        '''
+        src 2D array
+        '''
+        degs= np.array(src)
+        sp,ids = degs.shape
+        if sp >1:
+            vels = (degs[1:,:] - degs[:-1,:])/self.dt
+            vels = np.vstack([vels,vels[-1,:]])
+        else:
+            vels = np.ones(degs.shape)*50
+        return vels
 
 #%%
 if __name__ == "__main__":

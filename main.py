@@ -33,6 +33,8 @@ env = RREnv(robot)
 goal_qd = np.zeros(env.state_dimension)
 goal = [1,1,4,0,0,0]
 env.set_goal(goal,goal_qd)
+goal_pid = robot.Matrix4_Q(goal)
+# env.set_goal_trajectory(goal_pid,50)
 print("goal",env.goal)
 print("goal_q",env.goal_q)
 print(env.RR.Fk(env.goal_q)[-1])
@@ -48,7 +50,7 @@ figure_title = 'Running score of test_RRV4_action'
 avg_file = os.path.dirname(__file__)+'/plotPPO/test_RRV4_avg_action.png'
 avg_title = 'Running average of test_RRV4_avg_action'
 
-name = '_v1.pth'
+name = '_v2.pth'
 # name = None
 save_name = '_v3.pth'
 
@@ -97,7 +99,7 @@ target_entropy = -n_action
 epsloion = 0.2
 std_min = 1e-4
 std_max = 1
-path = os.path.dirname(__file__)+'/SAC/'
+path = os.path.dirname(__file__)+'/PPO/'
 
 save_freq = int(0.5e5)
 update_timestep = EP_LEN 
@@ -112,13 +114,13 @@ min_std = 0.2
 if __name__ == "__main__":
     best_score = -1000000 
     score_history = []
-    # agent = PPO(n_state,n_action,low,high,None,None,std_min=1e-4,std_max=0.5,A_LR=A_LR,C_LR=C_LR,gamma = gamma,gae_lamda = gae_lamda
-    #             ,norm_adv=True,epslion=epsloion,n_epoch=n_eopc,batch_size=batch_size,entropy_cofe=0.01
-    #             ,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,save_name=save_name,load_name=name,path=path)
+    agent = PPO(n_state,n_action,low,high,None,None,std_min=1e-4,std_max=0.5,A_LR=A_LR,C_LR=C_LR,gamma = gamma,gae_lamda = gae_lamda
+                ,norm_adv=True,epslion=epsloion,n_epoch=n_eopc,batch_size=batch_size,entropy_cofe=0.01
+                ,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,save_name=save_name,load_name=name,path=path)
     
-    agent = SAC(n_state,n_action,low,high,None,None,target_entropy,A_LR,C_LR,std_min=std_min,std_max=std_max
-                ,gamma = gamma,alpha_LR=Alpha_LR,tau=tau,max_size=max_size,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,
-                save_name=save_name,load_name=name,path=path,batch_size = batch_size)
+    # agent = SAC(n_state,n_action,low,high,None,None,target_entropy,A_LR,C_LR,std_min=std_min,std_max=std_max
+    #             ,gamma = gamma,alpha_LR=Alpha_LR,tau=tau,max_size=max_size,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,
+    #             save_name=save_name,load_name=name,path=path,batch_size = batch_size)
     
     
     time_step = 0
@@ -226,16 +228,108 @@ if __name__ == "__main__":
     # plot_learning_curve(x,score_history,figure_title,figure_file)
     # plot_runing_avg_learning_curve(x,score_history,avg_title,avg_file)
     
+
+    
+    
+    
     # test
     agent.load_model()
     epoc = 1000
     while epoc > 0:
         s = env.reset()
+        
+        # t = 0
+        # plot_q1 = []
+        # plot_q2 = []
+        # plot_qd1 = []
+        # plot_qd2 = []
+        # plot_x = []
+        # plot_y = []
+        # plot_z = []
+        # ts = []
+        
+        # plot_q1.append(s[0])
+        # plot_q2.append(s[1])
+        # plot_qd1.append(s[2])
+        # plot_qd2.append(s[3])
+        # plot_x.append(s[6])
+        # plot_y.append(s[7])
+        # plot_z.append(s[8])
+        # ts.append(t)
+        
         done = False
+        
         while not done:
+            t += 1
             env.render()
             a = agent.choose_action(s)
             s_,r,done = env.step(a)
             if done:
                 print(done)
             s = s_
+            
+            # plot_q1.append(s[0])
+            # plot_q2.append(s[1])
+            # plot_qd1.append(s[2])
+            # plot_qd2.append(s[3])
+            # plot_x.append(s[6])
+            # plot_y.append(s[7])
+            # plot_z.append(s[8])
+            # ts.append(t)
+            
+        # fig1 = plt.figure(figsize=((12,8)))
+        # fig2 = plt.figure(figsize=((12,8)))
+        # fig3 = plt.figure(figsize=((12,8)))
+        # fig4 = plt.figure(figsize=((12,8)))
+        # fig5 = plt.figure(figsize=((12,8)))
+        # fig6 = plt.figure(figsize=((12,8)))
+        # fig7 = plt.figure(figsize=((12,8)))
+        
+        # ax = fig1.add_subplot(1,1,1)
+        # ax2 = fig2.add_subplot(1,1,1)
+        # ax3 = fig3.add_subplot(1,1,1)
+        # ax4 = fig4.add_subplot(1,1,1)
+        # ax5 = fig5.add_subplot(1,1,1)
+        # ax6 = fig6.add_subplot(1,1,1)
+        # ax7 = fig7.add_subplot(1,1,1)
+        
+        # ax.plot(ts,plot_q1,color ='r',label="q1")
+        # ax2.plot(ts,plot_q2,color ='r',label="q2")
+        # ax3.plot(ts,plot_qd1,color ='r',label="qd1")
+        # ax4.plot(ts,plot_qd2,color ='r',label="qd2")
+        # ax5.plot(ts,plot_x,color ='r',label="x")
+        # ax6.plot(ts,plot_y,color ='r',label="y")
+        # ax7.plot(ts,plot_z,color ='r',label="z")
+        
+        # ax.set_title("SCARA RL q1 curve")
+        # ax2.set_title("SCARA RL q2 curve")
+        # ax3.set_title("SCARA RL qd1 curve")
+        # ax4.set_title("SCARA RL qd2 curve")
+        # ax5.set_title("SCARA RL x curve")
+        # ax6.set_title("SCARA RL y curve")
+        # ax7.set_title("SCARA RL z curve")
+        
+        # ax.legend()
+        # ax2.legend()
+        # ax3.legend()
+        # ax4.legend()
+        # ax5.legend()
+        # ax6.legend()
+        # ax7.legend()
+
+        # plt.show()
+    
+    
+    # test PID
+    # epoc = 1000
+    # while epoc > 0:
+    #     s = env.reset_pid()
+    #     done = False
+    #     while not done:
+    #         env.render()
+    #         done = env.PID_Trajectory()
+    #         # a = agent.choose_action(s)
+    #         # s_,r,done = env.step(a)
+    #         if done:
+    #             print(done)
+    #         # s = s_

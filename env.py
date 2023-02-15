@@ -153,6 +153,38 @@ class RREnv(object):
         
         return state
     
+    def reset_pid(self):
+        '''
+            return rads
+        '''
+        self.done = False
+        self.move_counter = 0
+        self.rads = np.array([0.8620742360644783, 1.123416829660566])
+        self.rads = self.__clip(self.rads) 
+        self.__drads = np.zeros(2)
+        self.__ddrads = np.zeros(2)
+        self.__past_distance = None
+        self.circle_count = 0
+        
+        self.ID1.reset(855,0,0,self.rads[0],self.__drads[0])
+        self.ID2.reset(855,0,0,self.rads[1],self.__drads[1])
+        
+        #initial
+        Pos = self.RR.Fk(self.rads)
+        self.RR.Fixed_Src(Pos)
+        
+        errq = (np.sum(self.goal_q - np.clip(self.rads,-100,100)) ** 2) ** 0.5
+        if errq <= 0.03:
+            self.reset()
+        
+        end = self.__get_End_point()
+        # t_arms = np.ravel(end[:3,3] - self.RR.src[:3,3])
+        t_arms = end[:3,3]
+        state = np.hstack((self.rads,self.__drads,self.__ddrads,t_arms))
+        # state = self.state_normlize(state)
+        
+        return state
+    
     def render(self):
         if self.viewer is None: #如果調用了 render,而且沒有viewer就生成一個
             self.viewer = Viewer3D(self.queuy_gl,self.RR)
@@ -171,13 +203,6 @@ class RREnv(object):
         self.goal_q = self.RR.IK_(self.rads,self.RR.src,self.goal)
         self.goal_qd = np.zeros(2)
         
-    def set_goal_trajectory(self,goal_point,step):
-        '''
-            need to fix
-        '''
-        goal = self.RR.Matrix4_Q(goal_point)
-        self.RR.Get_Matrix_Trajectory(self.RR.src,goal,step)
-    
     def __get_End_point(self):
         Pos = self.RR.Fk(self.rads)
         self.RR.Fixed_Src(Pos)
@@ -226,6 +251,116 @@ class RREnv(object):
         # distance = 1 /( 1 + distance)
             
         return -distance - 0.5 * dx + r
+    
+    def set_goal_trajectory(self,goal,step = 50):
+        
+        self.reset_pid()
+        
+        self.goal_rads = []
+        
+        self.goals = self.RR.Get_Matrix_Trajectory(self.RR.src,goal,step)
+        
+        for goal in self.goals:
+            print(goal,"\n")
+        
+        for i in range(len(self.goals)):
+            # if i == 0:
+            #     self.goal_rads.append(shadow_robot.IK(self.goals[i],self.goals[i]))
+            # else:
+            self.goal_rads.append(self.RR.IK_(np.zeros(2),self.RR.src,self.goals[i]))
+        
+        # for rad in self.goal_rads:
+        #     # print(rad)
+        #     print(self.RR.Fk(rad)[2],"\n")
+            
+        self.goal_drads = self.RR.Calvel(self.goal_rads)
+        
+        for rad in self.goal_rads:
+            print(rad)
+
+            
+        # for drad in self.goal_drads:
+        #     print(drad)
+            
+    def PID_Trajectory(self):
+        
+        q_list = []
+        qd_list = []
+        qdd_list = []
+        
+        plotq1 = []
+        plotq2 = []
+        plotqd1 = []
+        plotqd2 = []
+        
+        plot_end = []
+        ts = []
+        
+        self.rads = np.zeros(2)
+        self.drads = np.zeros(2)
+        self.ddrads = np.zeros(2)
+        
+        for i in range(len(self.goal_rads)):
+            t0 = time.time()
+            q = self.rads
+            qd = self.__drads
+            qdd_d = self.__ddrads
+            
+            q_list.append(q)
+            qd_list.append(qd)
+            qdd_list.append(qdd_d)
+            
+            now_torque = self.RR.InverseDynamics(q,qd,qdd_d)
+            
+            goal_q = np.array([1.57144839,-1.5724607 ])
+            goal_qd = np.array([0,0])
+            
+            torque1 = self.ID1.update(goal_q[0],goal_qd[0],q[0],qd[0],now_torque[0])
+            torque2 = self.ID2.update(goal_q[1],goal_qd[1],q[1],qd[1],now_torque[1])
+
+            input_torque = np.array([torque1,torque2])
+            new_q,new_qd,qdd_u = self.RR.Runge_Kutta4_Integral(q,qd,input_torque,self.dt)
+            
+            
+            # qdd_u = self.RR.ForwardDynamics(input_torque,q,qd)
+            # new_q,new_qd = self.RR.Euler_Integral(q,qd,qdd_u,self.dt)
+            
+            self.rads = self.__clip(new_q)
+            self.__drads = new_qd 
+            self.__ddrads = qdd_u
+             
+            end = self.__get_End_point()
+            
+            q_tmp = copy.deepcopy(q_list[-1])
+            qd_tmp = copy.deepcopy(qd_list[-1])
+            
+            plotq1.append(radTdeg(q_tmp[0]))
+            plotq2.append(radTdeg(q_tmp[1]))
+            
+            plotqd1.append(radTdeg(qd_tmp[0]))
+            plotqd2.append(radTdeg(qd_tmp[1]))
+            plot_end.append(end)
+            
+            ts.append(i * self.dt)
+            
+            t1 = time.time()
+            ct = t1 - t0
+            delay = self.dt - ct
+            if delay > 0: 
+                time.sleep(delay)
+        
+        self.done = True
+        # fig1 = plt.figure(figsize=((12,8)))
+        # fig2 = plt.figure(figsize=((12,8)))
+        # ax = fig1.add_subplot(1,1,1)
+        # ax2 = fig2.add_subplot(1,1,1)
+        # ax.plot(ts,plotq1,color ='r',label="q1")
+        # ax2.plot(ts,plotq2,color ='b',label="q2")
+        # ax.legend()
+        # ax2.legend()
+        # plt.show()
+        
+        return self.done
     
     
 class OpenGL_widget(QThread):
@@ -585,19 +720,22 @@ if __name__=="__main__":
     robot = RR(1,1,1,1,np.eye(3),np.eye(3))
     env = RREnv(robot)
     
-    goal_qd = np.zeros(env.state_dimension)
-    goal = [1,0,4,0,0,0]
-    env.set_goal(goal,goal_qd) 
+    # goal_qd = np.zeros(env.state_dimension)
+    # goal = [1,0,4,0,0,0]
+    # env.set_goal(goal,goal_qd) 
+    goal = [1,1,4,0,0,0]
+    goal = robot.Matrix4_Q(goal)
+    env.set_goal_trajectory(goal,50)
     
     
-    epoch = 0
-    s = env.reset()
+    # epoch = 0
+    # s = env.reset()
     
-    while epoch < 1000:
-        env.render()
-        a = env.simple_action()
-        env.step(a)
-        epoch += 1
+    # while epoch < 1000:
+    #     env.render()
+    #     a = env.simple_action()
+    #     env.step(a)
+    #     epoch += 1
  
-    app.exec()
-    print("exit_form")
+    # app.exec()
+    # print("exit_form")
