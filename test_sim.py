@@ -102,7 +102,7 @@ class OpenGL_widget(QThread):
         glutDialsFunc(self.paintGL)
         glutIdleFunc(self.paintGL)
 
-        glClearColor(0,0,0,1)
+        glClearColor(0.5,0.5,0.5,1)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHT0)
         glEnable(GL_LIGHTING)
@@ -353,7 +353,7 @@ class OpenGL_widget(QThread):
     
     def draw_ground(self):
         glColor3f(1.0,1.0,1.0)
-        glLineWidth(1.0)
+        glLineWidth(3.0)
         glBegin(GL_LINES)
         for i in range(21):
             data = -100 + i * 10
@@ -508,7 +508,7 @@ class RobotAPP(QDialog):
         ax2.legend()
         plt.show()
         
-    def FreeFall(self,period=1000):
+    def FreeFall(self,period = 1000):
         n = 2
         torque_initial = np.array([0,0])
         q_initial = np.array([0,0])
@@ -525,13 +525,13 @@ class RobotAPP(QDialog):
         while True:
             t0 = time.time()
             period -= 1
-            # q,qd = self.robot.Runge_Kutta4_Integral(q_list[-1],qd_list[-1],torque_initial,self.system_time)
-            q,qd = self.robot.Euler_Integral(q_list[-1],qd_list[-1],qdd_list[-1],self.system_time)
+            q,qd,qdd = self.robot.Runge_Kutta4_Integral(q_list[-1],qd_list[-1],torque_initial,self.system_time)
+            # q,qd = self.robot.Euler_Integral(q_list[-1],qd_list[-1],qdd_list[-1],self.system_time)
             q_list.append(q)
             qd_list.append(qd)
 
             # torque = self.robot.InverseDynamics(q_list[-1],qd_list[-1],qdd_list[-1])
-            qdd = self.robot.ForwardDynamics(torque_initial,q_list[-1],qd_list[-1])
+            # qdd = self.robot.ForwardDynamics(torque_initial,q_list[-1],qd_list[-1])
             qdd_list.append(qdd)
             Pos = self.robot.Fk(q_list[-1])
             self.robot.Fixed_Src(Pos)
@@ -554,8 +554,10 @@ class RobotAPP(QDialog):
         fig = plt.figure(figsize=((12,8)))
         ax = fig.add_subplot(1,2,1)
         ax2 = fig.add_subplot(1,2,2)
-        ax.plot(plot_q1,color ='r',label="q1")
-        ax2.plot(plot_q2,color ='b',label="q2")
+        ax.plot(plot_q1,color ='r')
+        ax.set_title("q1")
+        ax2.plot(plot_q2,color ='b')
+        ax2.set_title("q2")
         ax.legend()
         plt.show()
             # td.GetCounter(1)
@@ -592,8 +594,8 @@ if __name__ =='__main__':
     torque_in = np.array([0,0])
     goalq = [0.872,-0.855]
     goalqd = [0,0]
-    w.PID(goalq,goalqd,q_in,qd_in,torque_in)
-    # w.FreeFall()
+    # w.PID(goalq,goalqd,q_in,qd_in,torque_in)
+    w.FreeFall()
     app.exec()
     print('exit form')
 

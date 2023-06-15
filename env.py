@@ -90,7 +90,8 @@ class RREnv(object):
         # qdd_u = self.RR.ForwardDynamics(input_torque,q,qd)
         # new_q,new_qd = self.RR.Euler_Integral(q,qd,qdd_u,self.dt)
         
-        self.rads = self.__clip(new_q)
+        # self.rads = self.__clip(new_q)
+        self.rads = new_q
         self.__drads = new_qd 
         self.__ddrads = qdd_u 
         
@@ -127,7 +128,8 @@ class RREnv(object):
         '''
         self.done = False
         self.move_counter = 0
-        self.rads = np.random.rand(2) * pi * 0.5 
+        # self.rads = np.random.rand(2) * pi * 0.5
+        self.rads = np.zeros(2) #random goal 
         self.rads = self.__clip(self.rads) 
         self.__drads = np.zeros(2)
         self.__ddrads = np.zeros(2)
@@ -141,9 +143,9 @@ class RREnv(object):
         Pos = self.RR.Fk(self.rads)
         self.RR.Fixed_Src(Pos)
         
-        errq = (np.sum(self.goal_q - np.clip(self.rads,-100,100)) ** 2) ** 0.5
-        if errq <= 0.03:
-            self.reset()
+        # errq = (np.sum(self.goal_q - np.clip(self.rads,-100,100)) ** 2) ** 0.5
+        # if errq <= 0.03:
+        #     self.reset()
         
         end = self.__get_End_point()
         # t_arms = np.ravel(end[:3,3] - self.RR.src[:3,3])
@@ -202,6 +204,18 @@ class RREnv(object):
         self.goal = self.RR.Matrix4_Q(goal_point)
         self.goal_q = self.RR.IK_(self.rads,self.RR.src,self.goal)
         self.goal_qd = np.zeros(2)
+    
+    def set_goal_random(self):
+        '''
+            input Q [x,y,z,rx,ry,rz]
+        '''
+        g = [0.5,0.5,4,0,0,0]
+        g[0] = g[0] + (np.random.randn(1) * 0.5)[0]
+        g[1] = g[1] + (np.random.randn(1) * 0.5)[0]
+        
+        self.goal = self.RR.Matrix4_Q(g)
+        self.goal_q = self.RR.IK_(self.rads,self.RR.src,self.goal)
+        self.goal_qd = np.zeros(2)
         
     def __get_End_point(self):
         Pos = self.RR.Fk(self.rads)
@@ -243,6 +257,9 @@ class RREnv(object):
         if distance <= 0.05 and self.circle_count < 20:
             r = 10.
             self.done = True
+        if distance <= 0.05:
+            r = 10.
+            self.done = True
         if self.circle_count >= 20:
             print("bad")
             r = -10.
@@ -250,7 +267,7 @@ class RREnv(object):
             
         # distance = 1 /( 1 + distance)
             
-        return -distance - 0.5 * dx + r
+        return -distance - 0.1 * dx + r
     
     def set_goal_trajectory(self,goal,step = 50):
         
@@ -428,7 +445,7 @@ class OpenGL_widget(QThread):
         glutDialsFunc(self.paintGL)
         glutIdleFunc(self.paintGL)
 
-        glClearColor(0,0,0,1)
+        glClearColor(0.5,0.5,0.5,0.5)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHT0)
         glEnable(GL_LIGHTING)
@@ -570,9 +587,10 @@ class OpenGL_widget(QThread):
             self.goal = data[3]
         
 
-
         self.draw_ground()
         self.draw_robot()
+        
+        
 
         if self.window:
             glutSwapBuffers()
@@ -632,8 +650,9 @@ class OpenGL_widget(QThread):
         # p1 = self.draw_crood(self.p1) 
         # end = self.draw_crood(self.end)
         
+
+        glLineWidth(5)
         scale = 5
-        glLineWidth(line_width)
         glScaled(scale,scale,scale)
         goal = self.draw_crood(self.goal,1)
         #glScaled(0.001,0.001,0.001)
@@ -680,7 +699,7 @@ class OpenGL_widget(QThread):
         return pos
     
     def draw_ground(self):
-        glColor3f(1.0,1.0,1.0)
+        glColor3f(0.0,0.0,0.0)
         glLineWidth(1.0)
         glBegin(GL_LINES)
         for i in range(21):

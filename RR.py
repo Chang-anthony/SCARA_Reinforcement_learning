@@ -35,7 +35,9 @@ class RR(object):
         self.I2 = I2
         self.firction = 0.01
 
-        self.src = np.eye(4)
+        #freefall 
+        self.src = np.eye(4) @ self.RotXYZ(-pi/2,0,0)
+        # self.src = np.eye(4)
         self.p1 = np.eye(4)
         self.end = np.eye(4)
         
@@ -54,7 +56,9 @@ class RR(object):
         return Pos,deg
 
     def Init_Pos(self):
-        self.src = np.eye(4)
+        #freefall 
+        self.src = np.eye(4) @ self.RotXYZ(-pi/2,0,0)
+        # self.src = np.eye(4)
         Pos,deg = self.Init()
         self.bufferdegs = deg
 
@@ -66,7 +70,9 @@ class RR(object):
         '''
             return degs Pos  
         '''
-        self.src = np.eye(4)
+        #freefall 
+        self.src = np.eye(4) @ self.RotXYZ(-pi/2,0,0)
+        # self.src = np.eye(4)
         src_pos = np.array([0,0,4])
         self.src[:3,3] = src_pos
 
@@ -77,7 +83,7 @@ class RR(object):
         return Pos,rad
 
     def Fixed_Src(self,Pos):
-        self.src = self.src @ Pos[0]
+        self.src = self.src @ Pos[0] 
         self.p1 = self.src @ Pos[1]
         self.end = self.src @ Pos[2]
     
@@ -509,7 +515,8 @@ class RR(object):
         
         qdd = k1v
         qd = qd0 + h/6 * (k1v + 2 * k2v + 2 * k3v + k4v)
-        qd = np.clip(qd,-28/15*pi,28/15*pi) * 0.99
+        # qd = np.clip(qd,-28/15*pi,28/15*pi) * 0.99
+        qd = np.clip(qd,-28/15*pi,28/15*pi)
         q  = q0 + qd * h
 
         return q,qd,qdd
@@ -592,12 +599,16 @@ class RR(object):
         rotate_axis = ['z','z']
 
         # T1 = tool.RTTR_Matrix(pi/2,0,0,0)
-        T1 = tool.RTTR_Matrix(0,0,0,0)
-        T2 = tool.RTTR_Matrix(0,l1,0,q[0])
-        T3 = tool.RTTR_Matrix(0,l2,0,q[1])
+        # Tsrc = tool.RTTR_Matrix(0,0,0,0)
+        #freefall test
+        Tsrc = tool.RTTR_Matrix(pi/2,0,0,0)
+        T1 = tool.RTTR_Matrix(0,l1,0,q[0])
+        T2 = tool.RTTR_Matrix(0,l2,0,q[1])
         Ti = []
-        Ti.append(T1 @ T2 )
-        Ti.append(T1 @ T2 @ T3)
+        # Ti.append(T1 @ T2 )
+        # Ti.append(T1 @ T2 @ T3)
+        Ti.append(Tsrc @ T1)
+        Ti.append(Tsrc @ T1 @ T2)
         
         #genarator sympy term
         M,V,C,G,Jv,Jw,J,KE,Ki,PE = tool.Lagarange(n,q,qd,Ti,rotate_axis,mass,Pc,'z',I)

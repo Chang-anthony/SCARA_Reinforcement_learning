@@ -45,14 +45,14 @@ n_action = env.action_dimesion
 low = RREnv.q_bound[0]
 high = RREnv.q_bound[1] 
 
-figure_file = os.path.dirname(__file__)+'/plotPPO/test_v3_action.png'
-figure_title = 'Running score of test_RRV4_action'
-avg_file = os.path.dirname(__file__)+'/plotPPO/test_RRV4_avg_action.png'
-avg_title = 'Running average of test_RRV4_avg_action'
+figure_file = os.path.dirname(__file__)+'/plotSAC/test_RRV3_action.png'
+figure_title = 'Running score of test_RRV3_action'
+avg_file = os.path.dirname(__file__)+'/plotSAC/test_RRV3_avg_action.png'
+avg_title = 'Running average of test_RRV3_avg_action'
 
-name = '_v2.pth'
+name = '_v4.pth'
 # name = None
-save_name = '_v3.pth'
+save_name = '_v4.pth'
 
 ############################ PPO hyper-parameter #####################
 # N_game = int(3e6)
@@ -82,7 +82,7 @@ save_name = '_v3.pth'
 #########################################
 
 #################### SAC parameter #############################
-N_game = int(0.3e6)
+N_game = int(1e6)
 A_LR = 1e-4
 C_LR = 2e-4
 Alpha_LR = 2e-4
@@ -92,40 +92,40 @@ gamma = 0.99
 tau = 0.01
 max_size = 100000
 batch_size = 128
-EP_LEN = 1000
+EP_LEN = 3000
 n_eopc = 10
 min_size = 1000
 target_entropy = -n_action
 epsloion = 0.2
 std_min = 1e-4
 std_max = 1
-path = os.path.dirname(__file__)+'/PPO/'
+path = os.path.dirname(__file__)+'/SAC/'
 
-save_freq = int(0.5e5)
+save_freq = int(1e5)
 update_timestep = EP_LEN 
 print_freq = EP_LEN 
-decy_std = int(0.5e5)
+decy_std = int(1e5)
 action_std = 0.5
 std_rate = 0.1
-min_std = 0.2
+min_std = 0.1
 
 ##############################################################
 
 if __name__ == "__main__":
     best_score = -1000000 
     score_history = []
-    agent = PPO(n_state,n_action,low,high,None,None,std_min=1e-4,std_max=0.5,A_LR=A_LR,C_LR=C_LR,gamma = gamma,gae_lamda = gae_lamda
-                ,norm_adv=True,epslion=epsloion,n_epoch=n_eopc,batch_size=batch_size,entropy_cofe=0.01
-                ,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,save_name=save_name,load_name=name,path=path)
+    # agent = PPO(n_state,n_action,low,high,None,None,std_min=1e-4,std_max=0.5,A_LR=A_LR,C_LR=C_LR,gamma = gamma,gae_lamda = gae_lamda
+    #             ,norm_adv=True,epslion=epsloion,n_epoch=n_eopc,batch_size=batch_size,entropy_cofe=0.01
+    #             ,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,save_name=save_name,load_name=name,path=path)
     
-    # agent = SAC(n_state,n_action,low,high,None,None,target_entropy,A_LR,C_LR,std_min=std_min,std_max=std_max
-    #             ,gamma = gamma,alpha_LR=Alpha_LR,tau=tau,max_size=max_size,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,
-    #             save_name=save_name,load_name=name,path=path,batch_size = batch_size)
+    agent = SAC(n_state,n_action,low,high,None,None,target_entropy,A_LR,C_LR,std_min=std_min,std_max=std_max
+                ,gamma = gamma,alpha_LR=Alpha_LR,tau=tau,max_size=max_size,fc1=32,fc2=64,fc3=128,fc4=256,fc5=256,
+                save_name=save_name,load_name=name,path=path,batch_size = batch_size)
     
     
     time_step = 0
     i_episode = 0
-    
+    avg_score = 0
     # # for PPO on-policy method
     # while time_step <= N_game:
     #     s = env.reset()
@@ -183,6 +183,7 @@ if __name__ == "__main__":
     # for SAC DDPG off-policy method
     # while time_step <= N_game:
     #     s = env.reset()
+    #     env.set_goal_random()
     #     # done = False
     #     rewards = 0
     #     t0 = time.time()
@@ -237,6 +238,7 @@ if __name__ == "__main__":
     epoc = 1000
     while epoc > 0:
         s = env.reset()
+        env.set_goal_random()
         
         # t = 0
         # plot_q1 = []
@@ -260,7 +262,6 @@ if __name__ == "__main__":
         done = False
         
         while not done:
-            t += 1
             env.render()
             a = agent.choose_action(s)
             s_,r,done = env.step(a)
@@ -268,6 +269,7 @@ if __name__ == "__main__":
                 print(done)
             s = s_
             
+            # t += 1
             # plot_q1.append(s[0])
             # plot_q2.append(s[1])
             # plot_qd1.append(s[2])
@@ -333,3 +335,12 @@ if __name__ == "__main__":
     #         if done:
     #             print(done)
     #         # s = s_
+    
+    
+    # test FreeFall
+    epoc = 1000
+    while epoc > 0:
+        s = env.reset()
+        done = False
+        while not done:
+            env.render()
