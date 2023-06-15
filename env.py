@@ -58,6 +58,7 @@ class RREnv(object):
         self.__torque = np.zeros(2)
         self.__Q = np.diag([5,5,0.001,0.001])
         self.__R = np.diag([1,1])
+        self.round_rewards = []
         
         #init motor
         self.ID1 = Motor()
@@ -135,6 +136,7 @@ class RREnv(object):
         self.__ddrads = np.zeros(2)
         self.__past_distance = None
         self.circle_count = 0
+        self.round_rewards = []
         
         self.ID1.reset(855,0,0,self.rads[0],self.__drads[0])
         self.ID2.reset(855,0,0,self.rads[1],self.__drads[1])
@@ -266,6 +268,7 @@ class RREnv(object):
             self.done = True
             
         # distance = 1 /( 1 + distance)
+        self.round_rewards.append(-distance - 0.1 * dx + r - np.sum(abs(self.__ddrads)) * 0.001)
             
         return -distance - 0.1 * dx + r
     
@@ -379,6 +382,23 @@ class RREnv(object):
         
         return self.done
     
+    @staticmethod
+    def Get_Motor_data(motor:Motor):
+        '''
+            return buffer datas
+            q,qd,goalq,goalqd,errq,errqd,load,output
+        '''
+
+        return motor.Get_buffers()      
+    
+    def control_cost(self,weight):
+        # control_cost = weight * np.sum(np.square(self.__drads[11:23]))
+        control_cost_motor = weight * (np.sum((self.power)**2)**0.5)
+        
+        return control_cost_motor
+    
+    def Get_round_rewards(self):
+        return self.round_rewards
     
 class OpenGL_widget(QThread):
     def __init__(self,robotpoints,RR:RR):
