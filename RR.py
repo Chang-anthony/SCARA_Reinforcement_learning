@@ -36,8 +36,8 @@ class RR(object):
         self.firction = 0.01
 
         #freefall 
-        self.src = np.eye(4) @ self.RotXYZ(-pi/2,0,0)
-        # self.src = np.eye(4)
+        # self.src = np.eye(4) @ self.RotXYZ(-pi/2,0,0)
+        self.src = np.eye(4)
         self.p1 = np.eye(4)
         self.end = np.eye(4)
         
@@ -57,8 +57,8 @@ class RR(object):
 
     def Init_Pos(self):
         #freefall 
-        self.src = np.eye(4) @ self.RotXYZ(-pi/2,0,0)
-        # self.src = np.eye(4)
+        # self.src = np.eye(4) @ self.RotXYZ(-pi/2,0,0)
+        self.src = np.eye(4)
         Pos,deg = self.Init()
         self.bufferdegs = deg
 
@@ -71,8 +71,8 @@ class RR(object):
             return degs Pos  
         '''
         #freefall 
-        self.src = np.eye(4) @ self.RotXYZ(-pi/2,0,0)
-        # self.src = np.eye(4)
+        # self.src = np.eye(4) @ self.RotXYZ(-pi/2,0,0)
+        self.src = np.eye(4)
         src_pos = np.array([0,0,4])
         self.src[:3,3] = src_pos
 
@@ -360,7 +360,7 @@ class RR(object):
     
     def Jacoiban(self,rads,Pos):
         
-        dt = 0.01
+        dt = degTrad(0.001)
         end = Pos[-1]
         n = len(rads)
         J = np.zeros((12,n))
@@ -382,9 +382,9 @@ class RR(object):
             V = srcTgoal - srcTend
         '''
 
-        sTgoal = np.linalg.inv(src) @ goal
+        sTgoal = goal
 
-        iter = 1000
+        iter = 10
         goal_rads = np.zeros(2)
 
         goal_rads[0] = degTrad(1)
@@ -402,8 +402,8 @@ class RR(object):
             if (error <= 0.001) or (iter == 0):
                 break
 
-            # J = self.Get_J(Pos)
-            J = self.Jacoiban(goal_rads,Pos)
+            J = self.Get_J(Pos)
+            # J = self.Jacoiban(goal_rads,Pos)
             #V = Jw w = (J)-1 * V
             w = np.linalg.pinv(J) @ V
             goal_rads = goal_rads +  alpha * w  
@@ -419,7 +419,7 @@ class RR(object):
             V = srcTgoal - srcTend
         '''
 
-        sTgoal = np.linalg.inv(src) @ goal
+        sTgoal = goal
 
         iter = 1000
         goal_rads = rads
@@ -444,6 +444,33 @@ class RR(object):
         print("iter",iter)
         return goal_rads
     
+    def IK_Ref(self,goal):
+        sTgoal = goal
+        
+        l1 = self.L1  
+        l2 = self.L2
+        
+        # 提取位姿矩陣的旋轉和平移部分
+        rotation_matrix = sTgoal[:3, :3]
+        translation_vector = sTgoal[:3, 3]
+
+        # 計算末端位置
+        end_effector_position = translation_vector
+
+        # 計算第二個關節角度(theta2)
+        x = end_effector_position[0]
+        y = end_effector_position[1]
+        c2 = (x**2 + y**2 - l1**2 - l2**2) / (2 * l1 * l2)
+        s2 = np.sqrt(1 - c2**2)
+        theta2 = np.arctan2(s2, c2)
+
+        # 計算第一個關節角度(theta1)
+        k1 = l1 + l2 * np.cos(theta2)
+        k2 = l2 * np.sin(theta2)
+        theta1 = np.arctan2(y, x) - np.arctan2(k2, k1)
+
+        return theta1, theta2
+        
     def Mass(self,q):
         ''' 
             use this method to clculate numpy input rad , return Mass_Matrix
@@ -515,8 +542,8 @@ class RR(object):
         
         qdd = k1v
         qd = qd0 + h/6 * (k1v + 2 * k2v + 2 * k3v + k4v)
-        # qd = np.clip(qd,-28/15*pi,28/15*pi) * 0.99
-        qd = np.clip(qd,-28/15*pi,28/15*pi)
+        qd = np.clip(qd,-28/15*pi,28/15*pi) * 0.99
+        # qd = np.clip(qd,-28/15*pi,28/15*pi)
         q  = q0 + qd * h
 
         return q,qd,qdd
@@ -598,10 +625,10 @@ class RR(object):
         Pc = [Pc1,Pc2]
         rotate_axis = ['z','z']
 
-        # T1 = tool.RTTR_Matrix(pi/2,0,0,0)
-        # Tsrc = tool.RTTR_Matrix(0,0,0,0)
+        # Tsrc = tool.RTTR_Matrix(pi/2,0,0,0)
+        Tsrc = tool.RTTR_Matrix(0,0,0,0)
         #freefall test
-        Tsrc = tool.RTTR_Matrix(pi/2,0,0,0)
+        # Tsrc = tool.RTTR_Matrix(pi/2,0,0,0)
         T1 = tool.RTTR_Matrix(0,l1,0,q[0])
         T2 = tool.RTTR_Matrix(0,l2,0,q[1])
         Ti = []

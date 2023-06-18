@@ -83,7 +83,7 @@ figure_title = 'Running score of test_RRV3_action'
 avg_file = os.path.dirname(__file__)+'/plotSAC/test_RRV3_avg_action.png'
 avg_title = 'Running average of test_RRV3_avg_action'
 
-name = '_v4.pth'
+name = '_v1.pth'
 # name = None
 save_name = '_v4.pth'
 
@@ -271,7 +271,13 @@ if __name__ == "__main__":
     epoc = 1000
     while epoc > 0:
         s = env.reset()
-        env.set_goal_random()
+        # env.set_goal_random()
+        env.set_goal_trajectory(env.goal)
+
+        goal = env.goals
+        goal_rads = env.goal_rads
+        goal_drads = env.goal_drads
+        
         
         t = 0
         # plot_q1 = []
@@ -383,9 +389,9 @@ if __name__ == "__main__":
     
     
     # test FreeFall
-    epoc = 1000
-    while epoc > 0:
-        s = env.reset()
-        done = False
-        while not done:
-            env.render()
+    # epoc = 1000
+    # while epoc > 0:
+    #     s = env.reset()
+    #     done = False
+    #     while not done:
+    #         env.render()

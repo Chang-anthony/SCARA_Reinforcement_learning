@@ -129,8 +129,8 @@ class RREnv(object):
         '''
         self.done = False
         self.move_counter = 0
-        # self.rads = np.random.rand(2) * pi * 0.5
-        self.rads = np.zeros(2) #random goal 
+        self.rads = np.random.rand(2) * pi * 0.5
+        # self.rads = np.zeros(2) #random goal 
         self.rads = self.__clip(self.rads) 
         self.__drads = np.zeros(2)
         self.__ddrads = np.zeros(2)
@@ -274,20 +274,23 @@ class RREnv(object):
     
     def set_goal_trajectory(self,goal,step = 50):
         
-        self.reset_pid()
+        #self.reset_pid()
         
         self.goal_rads = []
         
-        self.goals = self.RR.Get_Matrix_Trajectory(self.RR.src,goal,step)
+        end = self.RR.Fk(self.rads)[-1]
+
+        self.goals = self.RR.Get_Matrix_Trajectory(end,np.linalg.inv(self.RR.src) @ goal,step)
         
-        for goal in self.goals:
-            print(goal,"\n")
+        print(self.goals)
+        # for goal in self.goals:
+        #     print(goal,"\n")
         
         for i in range(len(self.goals)):
             # if i == 0:
             #     self.goal_rads.append(shadow_robot.IK(self.goals[i],self.goals[i]))
             # else:
-            self.goal_rads.append(self.RR.IK_(np.zeros(2),self.RR.src,self.goals[i]))
+            self.goal_rads.append(self.RR.IK(self.RR.src,self.goals[i]))
         
         # for rad in self.goal_rads:
         #     # print(rad)
@@ -298,6 +301,8 @@ class RREnv(object):
         for rad in self.goal_rads:
             print(rad)
 
+        for rad in env.goal_rads:
+            print(env.RR.Fk(rad)[-1])
             
         # for drad in self.goal_drads:
         #     print(drad)
