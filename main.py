@@ -272,11 +272,6 @@ if __name__ == "__main__":
     while epoc > 0:
         s = env.reset()
         # env.set_goal_random()
-        env.set_goal_trajectory(env.goal)
-
-        goal = env.goals
-        goal_rads = env.goal_rads
-        goal_drads = env.goal_drads
         
         
         t = 0
@@ -296,7 +291,6 @@ if __name__ == "__main__":
         # plot_x.append(s[6])
         # plot_y.append(s[7])
         # plot_z.append(s[8])
-        ts.append(t)
         
         done = False
         
@@ -316,19 +310,38 @@ if __name__ == "__main__":
             # plot_x.append(s[6])
             # plot_y.append(s[7])
             # plot_z.append(s[8])
-            ts.append(t)
-         
-        # ID1 = env.Get_Motor_data(env.ID1)
-        # ID2 = env.Get_Motor_data(env.ID2)
-        # errqID11 = np.array(ID1_gq) - np.array(ID1[0])
-        # errqdID11 = np.array(ID1_gqd) - np.array(ID1[1])
+            ts.append(t * 0.04)
         
-        # plot_figure(ts,ID1[2],"ID1 angle curve",'ID11_q'
-        #                 ,y2 = ID1[0],y3 = errqID11,y4=ID11_gq,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
-        # plot_figure(ts,ID1[3],"ID1 angle_velocity curve",'ID11_qd',
-        #                 y2 = ID1[1],y3 = errqdID11,y4=ID11_gqd,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
-        # plot_figure(ts,goal_load11,"ID1 Load And Output Torque Curve",'ID11_torque',
-        #                 y2 = ID1[6],y3 = ID1[7],c1='g',c2='b',c3='r',name1='gload',name2 = 'load',name3='power',plot_num=3) 
+        
+        length = len(ts)
+        
+        env.set_goal_trajectory(env.goal,step = length)
+
+        goal = np.array(env.goals)
+        goal_rads = np.array(env.goal_rads)
+        goal_drads = np.array(env.goal_drads)
+        goal_loads = np.array(env.goal_load)
+        
+        ID1_gq = goal_rads[:,0]
+        ID1_gqd = goal_drads[:,0]
+        
+        ID2_gq = goal_rads[:,1]
+        ID2_gqd = goal_drads[:,1]
+        
+        goal_load1 = goal_loads[:,0]
+        goal_load2 = goal_loads[:,1]
+         
+        ID1 = env.Get_Motor_data(env.ID1)
+        ID2 = env.Get_Motor_data(env.ID2)
+        errqID1 = np.array(ID1_gq) - np.array(ID1[0])
+        errqdID1 = np.array(ID1_gqd) - np.array(ID1[1])
+        
+        plot_figure(ts,ID1[2],"ID1 angle curve",'ID1_q'
+                        ,y2 = ID1[0],y3 = errqID1,y4=ID1_gq,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
+        plot_figure(ts,ID1[3],"ID1 angle_velocity curve",'ID1_qd',
+                        y2 = ID1[1],y3 = errqdID1,y4=ID1_gqd,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
+        plot_figure(ts,goal_load1,"ID1 Load And Output Torque Curve",'ID1_torque',
+                        y2 = ID1[6],y3 = ID1[7],c1='g',c2='b',c3='r',name1='gload',name2 = 'load',name3='power',plot_num=3) 
             
         # fig1 = plt.figure(figsize=((12,8)))
         # fig2 = plt.figure(figsize=((12,8)))

@@ -130,6 +130,8 @@ class RREnv(object):
         self.done = False
         self.move_counter = 0
         self.rads = np.random.rand(2) * pi * 0.5
+        
+        self.__clc_rads = copy.deepcopy(self.rads)
         # self.rads = np.zeros(2) #random goal 
         self.rads = self.__clip(self.rads) 
         self.__drads = np.zeros(2)
@@ -277,8 +279,9 @@ class RREnv(object):
         #self.reset_pid()
         
         self.goal_rads = []
+        self.goal_load = []
         
-        end = self.RR.Fk(self.rads)[-1]
+        end = self.RR.Fk(self.__clc_rads)[-1]
 
         self.goals = self.RR.Get_Matrix_Trajectory(end,np.linalg.inv(self.RR.src) @ goal,step)
         
@@ -290,7 +293,8 @@ class RREnv(object):
             # if i == 0:
             #     self.goal_rads.append(shadow_robot.IK(self.goals[i],self.goals[i]))
             # else:
-            self.goal_rads.append(self.RR.IK(self.RR.src,self.goals[i]))
+            # self.goal_rads.append(self.RR.IK(self.RR.src,self.goals[i]))
+            self.goal_rads.append(self.RR.IK_Ref(self.goals[i]))
         
         # for rad in self.goal_rads:
         #     # print(rad)
@@ -300,9 +304,12 @@ class RREnv(object):
         
         for rad in self.goal_rads:
             print(rad)
-
-        for rad in env.goal_rads:
-            print(env.RR.Fk(rad)[-1])
+        
+        for i in range(len(self.goal_rads)):
+            self.goal_load.append(self.RR.InverseDynamics(self.goal_rads[i],self.goal_drads[i],np.zeros(2)))
+            print(self.RR.Fk(self.goal_rads[i])[-1])
+            
+        
             
         # for drad in self.goal_drads:
         #     print(drad)

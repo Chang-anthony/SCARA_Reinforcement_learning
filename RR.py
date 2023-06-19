@@ -291,9 +291,9 @@ class RR(object):
             ky = (D[0,2] - D[2,0]) / u
             kz = (D[1,0] - D[0,1]) / u
 
-        OUTs= np.zeros((step + 1,4,4))
-        rates = np.arange(0,1+1/step,1/step)
-        us = np.ones((step+1))
+        OUTs= np.zeros((step,4,4))
+        rates = np.arange(0,1,1/step)
+        us = np.ones((step))
         rates_theta = rates * theta
         Cs = cos(rates_theta)
         Ss = sin(rates_theta)
@@ -468,8 +468,9 @@ class RR(object):
         k1 = l1 + l2 * np.cos(theta2)
         k2 = l2 * np.sin(theta2)
         theta1 = np.arctan2(y, x) - np.arctan2(k2, k1)
+        
 
-        return theta1, theta2
+        return [theta1, theta2]
         
     def Mass(self,q):
         ''' 
