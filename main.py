@@ -18,7 +18,7 @@ import sys
 
 
 
-def plot_figure(x,y,title,name,save_flie=os.path.dirname(__file__)+'/Save_fig_2023_0613/'
+def plot_figure(x,y,title,name,save_flie=os.path.dirname(__file__)+'/Save_fig_2023_0731/'
                     ,y2 = None,y3=None,y4=None,c1='g',c2='b',c3='r',c4='y',name1='str',name2='str',name3='str',name4='str',plot_num = 1):
     fig = plt.figure(figsize=(8,6))
     ax = fig.add_subplot(1,1,1)
@@ -61,7 +61,7 @@ radTdeg = np.rad2deg
 
 ################## hyper parameter ####################
 app = QApplication(sys.argv)
-robot = RR(1,1,0.2,0.2,np.eye(3) * 0.2,np.eye(3) * 0.2)
+robot = RR(1,1,0.1,0.05,np.eye(3) * 0.05,np.eye(3) * 0.05)
 env = RREnv(robot)
 goal_qd = np.zeros(env.state_dimension)
 goal = [1,1,4,0,0,0]
@@ -78,13 +78,13 @@ n_action = env.action_dimesion
 low = RREnv.q_bound[0]
 high = RREnv.q_bound[1] 
 
-figure_file = os.path.dirname(__file__)+'/plotSAC/test_RRV3_action.png'
-figure_title = 'Running score of test_RRV3_action'
-avg_file = os.path.dirname(__file__)+'/plotSAC/test_RRV3_avg_action.png'
-avg_title = 'Running average of test_RRV3_avg_action'
+figure_file = os.path.dirname(__file__)+'/plotSAC/test_RRV4_action.png'
+figure_title = 'Running score of test_RRV4_action'
+avg_file = os.path.dirname(__file__)+'/plotSAC/test_RRV4_avg_action.png'
+avg_title = 'Running average of test_RRV4_avg_action'
 
-name = '_v1.pth'
-# name = None
+name = '_v4.pth'
+name = None
 save_name = '_v4.pth'
 
 ############################ PPO hyper-parameter #####################
@@ -214,134 +214,148 @@ if __name__ == "__main__":
     
     
     # for SAC DDPG off-policy method
-    # while time_step <= N_game:
-    #     s = env.reset()
-    #     env.set_goal_random()
-    #     # done = False
-    #     rewards = 0
-    #     t0 = time.time()
-    #     for t in range(1,EP_LEN+1):
+    while time_step <= N_game:
+        s = env.reset()
+        # env.set_goal_random()
+        # done = False
+        rewards = 0
+        t0 = time.time()
+        for t in range(1,EP_LEN+1):
             
-    #         a = agent.choose_action(s)
-    #         s_,r,done = env.step(a)
+            a = agent.choose_action(s)
+            s_,r,done = env.step(a)
             
-    #         #store_trainstion
-    #         agent.store_transition(s,a,r,s_,done)
+            #store_trainstion
+            agent.store_transition(s,a,r,s_,done)
             
-    #         rewards += r
-    #         time_step += 1
-    #         #update SAC
-    #         if agent.memory.memory_counter >= min_size:
-    #             agent.learn()
+            rewards += r
+            time_step += 1
+            #update SAC
+            if agent.memory.memory_counter >= min_size:
+                agent.learn()
                 
-    #         if time_step % print_freq == 0:
-    #             print_score = round(avg_score,4)
+            if time_step % print_freq == 0:
+                print_score = round(avg_score,4)
                 
-    #             print("Episode : {} \t\t Timestep : {} \t\t Average Reward : {}".format(i_episode, time_step, print_score))
+                print("Episode : {} \t\t Timestep : {} \t\t Average Reward : {}".format(i_episode, time_step, print_score))
             
-    #         if time_step % decy_std == 0:
-    #             agent.decay_std_max(std_rate,min_std)
+            if time_step % decy_std == 0:
+                agent.decay_std_max(std_rate,min_std)
             
-    #         if time_step % save_freq == 0:
-    #             # if rewards > best_score:
-    #                 best_score = rewards
-    #                 print("--------------------------------------------------------------------------------------------")
-    #                 agent.save_model()
-    #                 print("----------------- best_score -------------------- %.3f" % best_score)
+            if time_step % save_freq == 0:
+                # if rewards > best_score:
+                    best_score = rewards
+                    print("--------------------------------------------------------------------------------------------")
+                    agent.save_model()
+                    print("----------------- best_score -------------------- %.3f" % best_score)
                     
-    #         if done:
-    #             break 
+            if done:
+                break 
             
-    #         s = s_
+            s = s_
                     
-    #     i_episode += 1          
-    #     score_history.append(rewards)
-    #     avg_score = np.mean(score_history[-update_timestep:])
+        i_episode += 1          
+        score_history.append(rewards)
+        avg_score = np.mean(score_history[-update_timestep:])
 
-    # x = [i+1 for i in range(len(score_history))]
-    # plot_learning_curve(x,score_history,figure_title,figure_file)
-    # plot_runing_avg_learning_curve(x,score_history,avg_title,avg_file)
+    x = [i+1 for i in range(len(score_history))]
+    plot_learning_curve(x,score_history,figure_title,figure_file)
+    plot_runing_avg_learning_curve(x,score_history,avg_title,avg_file)
     
 
     
     
     
     # test
-    agent.load_model()
-    epoc = 1000
-    while epoc > 0:
-        s = env.reset()
-        # env.set_goal_random()
+    # agent.load_model()
+    # epoc = 1000
+    # while epoc > 0:
+    #     s = env.reset()
+    #     # env.set_goal_random()
         
         
-        t = 0
-        # plot_q1 = []
-        # plot_q2 = []
-        # plot_qd1 = []
-        # plot_qd2 = []
-        # plot_x = []
-        # plot_y = []
-        # plot_z = []
-        ts = []
+    #     t = 0
+    #     # plot_q1 = []
+    #     # plot_q2 = []
+    #     # plot_qd1 = []
+    #     # plot_qd2 = []
+    #     # plot_x = []
+    #     # plot_y = []
+    #     # plot_z = []
+    #     ts = []
         
-        # plot_q1.append(s[0])
-        # plot_q2.append(s[1])
-        # plot_qd1.append(s[2])
-        # plot_qd2.append(s[3])
-        # plot_x.append(s[6])
-        # plot_y.append(s[7])
-        # plot_z.append(s[8])
+    #     # plot_q1.append(s[0])
+    #     # plot_q2.append(s[1])
+    #     # plot_qd1.append(s[2])
+    #     # plot_qd2.append(s[3])
+    #     # plot_x.append(s[6])
+    #     # plot_y.append(s[7])
+    #     # plot_z.append(s[8])
         
-        done = False
+    #     done = False
         
-        while not done:
-            env.render()
-            a = agent.choose_action(s)
-            s_,r,done = env.step(a)
-            if done:
-                print(done)
-            s = s_
+    #     while not done:
+    #         env.render()
+    #         a = agent.choose_action(s)
+    #         s_,r,done = env.step(a)
+    #         if done:
+    #             print(done)
+    #         s = s_
             
-            t += 1
-            # plot_q1.append(s[0])
-            # plot_q2.append(s[1])
-            # plot_qd1.append(s[2])
-            # plot_qd2.append(s[3])
-            # plot_x.append(s[6])
-            # plot_y.append(s[7])
-            # plot_z.append(s[8])
-            ts.append(t * 0.04)
+    #         t += 1
+    #         # plot_q1.append(s[0])
+    #         # plot_q2.append(s[1])
+    #         # plot_qd1.append(s[2])
+    #         # plot_qd2.append(s[3])
+    #         # plot_x.append(s[6])
+    #         # plot_y.append(s[7])
+    #         # plot_z.append(s[8])
+    #         ts.append(t * 0.04)
         
         
-        length = len(ts)
+    #     length = len(ts)
         
-        env.set_goal_trajectory(env.goal,step = length)
+    #     env.set_goal_trajectory(env.goal,step = length)
 
-        goal = np.array(env.goals)
-        goal_rads = np.array(env.goal_rads)
-        goal_drads = np.array(env.goal_drads)
-        goal_loads = np.array(env.goal_load)
+        # goal = np.array(env.goals)
+        # goal_rads = np.array(env.goal_rads)
+        # goal_drads = np.array(env.goal_drads)
+        # goal_loads = np.array(env.goal_load)
         
-        ID1_gq = goal_rads[:,0]
-        ID1_gqd = goal_drads[:,0]
+        # ID1_gq = goal_rads[:,0]
+        # ID1_gqd = goal_drads[:,0]
         
-        ID2_gq = goal_rads[:,1]
-        ID2_gqd = goal_drads[:,1]
+        # ID2_gq = goal_rads[:,1]
+        # ID2_gqd = goal_drads[:,1]
         
-        goal_load1 = goal_loads[:,0]
-        goal_load2 = goal_loads[:,1]
+        # goal_load1 = goal_loads[:,0]
+        # goal_load2 = goal_loads[:,1]
          
-        ID1 = env.Get_Motor_data(env.ID1)
-        ID2 = env.Get_Motor_data(env.ID2)
-        errqID1 = np.array(ID1_gq) - np.array(ID1[0])
-        errqdID1 = np.array(ID1_gqd) - np.array(ID1[1])
+        # ID1 = env.Get_Motor_data(env.ID1)
+        # ID2 = env.Get_Motor_data(env.ID2)
+        # errqID1 = np.array(ID1_gq) - np.array(ID1[0])
+        # errqdID1 = np.array(ID1_gqd) - np.array(ID1[1])
         
-        plot_figure(ts,ID1[2],"ID1 angle curve",'ID1_q'
-                        ,y2 = ID1[0],y3 = errqID1,y4=ID1_gq,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
-        plot_figure(ts,ID1[3],"ID1 angle_velocity curve",'ID1_qd',
-                        y2 = ID1[1],y3 = errqdID1,y4=ID1_gqd,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
-        plot_figure(ts,goal_load1,"ID1 Load And Output Torque Curve",'ID1_torque',
-                        y2 = ID1[6],y3 = ID1[7],c1='g',c2='b',c3='r',name1='gload',name2 = 'load',name3='power',plot_num=3) 
+        # errqID2 = np.array(ID2_gq) - np.array(ID2[0])
+        # errqdID2 = np.array(ID2_gqd) - np.array(ID2[1])
+        
+        # round_rewards = env.Get_round_rewards()
+        
+        # plot_figure(ts,round_rewards,"round rewards curve",name='reward',name1='r',plot_num=1)
+        
+        # plot_figure(ts,ID1[2],"ID1 angle curve",'ID1_q'
+        #                 ,y2 = ID1[0],y3 = errqID1,y4=ID1_gq,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
+        # plot_figure(ts,ID1[3],"ID1 angle_velocity curve",'ID1_qd',
+        #                 y2 = ID1[1],y3 = errqdID1,y4=ID1_gqd,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
+        # plot_figure(ts,goal_load1,"ID1 Load And Output Torque Curve",'ID1_torque',
+        #                 y2 = ID1[6],y3 = ID1[7],c1='g',c2='b',c3='r',name1='gload',name2 = 'load',name3='power',plot_num=3)
+        
+        # plot_figure(ts,ID2[2],"ID2 angle curve",'ID2_q'
+        #                 ,y2 = ID2[0],y3 = errqID2,y4=ID2_gq,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
+        # plot_figure(ts,ID2[3],"ID2 angle_velocity curve",'ID2_qd',
+        #                 y2 = ID2[1],y3 = errqdID2,y4=ID2_gqd,name1='RL_goal',name2='state',name3='error',name4='ref_goal',plot_num=4)
+        # plot_figure(ts,goal_load2,"ID2 Load And Output Torque Curve",'ID2_torque',
+        #                 y2 = ID2[6],y3 = ID2[7],c1='g',c2='b',c3='r',name1='gload',name2 = 'load',name3='power',plot_num=3)  
             
         # fig1 = plt.figure(figsize=((12,8)))
         # fig2 = plt.figure(figsize=((12,8)))

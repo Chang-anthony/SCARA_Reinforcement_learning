@@ -78,7 +78,7 @@ class RREnv(object):
         input_qd = np.copy(action) / self.dt
         input_qd = np.clip(input_qd,self.qd_bound[0],self.qd_bound[1])
         
-        now_torque = self.RR.InverseDynamics(q,qd,qdd_d)
+        now_torque = self.RR.InverseDynamics(q,qd,qdd_d * 0.96)
         
 
         torque1 = self.ID1.update(input_q[0],input_qd[0],q[0],qd[0],now_torque[0])
@@ -268,11 +268,18 @@ class RREnv(object):
             print("bad")
             r = -10.
             self.done = True
+        
+        overloaderror = 0
+        if self.done:
+           Id1 = self.ID1.OverLoadError(0.05)
+           Id2 = self.ID2.OverLoadError(0.05)
+           print("Id1",Id1,": Id2 :",Id2)
+           overloaderror = -(Id1 + Id2)
             
         # distance = 1 /( 1 + distance)
-        self.round_rewards.append(-distance - 0.1 * dx + r - np.sum(abs(self.__ddrads)) * 0.001)
+        self.round_rewards.append(-distance - 0.1 * dx - np.sum(abs(self.__ddrads)) * 0.001 + overloaderror)
             
-        return -distance - 0.1 * dx + r
+        return -distance - 0.1 * dx + r + overloaderror
     
     def set_goal_trajectory(self,goal,step = 50):
         

@@ -87,6 +87,12 @@ class Motor(object):
         
         return efficency
     
+    def OverLoadError(self,weight = 0.2):
+        '''
+            load torque error
+        '''
+        return weight * np.sum(np.array(self.torque_buffer) - np.array(self.load_buffer))
+    
     
     def Get_buffers(self):
         '''

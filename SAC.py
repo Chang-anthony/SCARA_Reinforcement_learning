@@ -14,7 +14,7 @@ path = os.path.dirname(__file__)+'/'
 
 
 # torch.cuda.set_device(0) #import  part
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Policy(nn.Module):
     def __init__(self,n_state,n_action,qhigh,qdhigh=None ,LR=None,std_min=1e-4,std_max=1,fc1=64,fc2=128,fc3=256,fc4=256,fc5=256):
@@ -121,6 +121,8 @@ class SAC(object):
                  save_name = 'v1.pth',
                  path = os.path.dirname(__file__)+'/SAC/',
                  ):
+        
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         
         self.actor = Policy(n_state,n_action,action_q_high,action_qd_high,LR=A_LR,std_min=std_min,std_max=std_max,fc1=fc1,fc2=fc2,fc3=fc3,fc4=fc4,fc5=fc5).to(device)
         

@@ -8,7 +8,7 @@ from buffer import My_ReplayBuffer,DataBuffer
 import os
 import time
 path = os.path.dirname(__file__)+'/'
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu ")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.autograd.set_detect_anomaly(True)
 
 

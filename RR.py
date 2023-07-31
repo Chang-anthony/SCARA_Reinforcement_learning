@@ -543,7 +543,7 @@ class RR(object):
         
         qdd = k1v
         qd = qd0 + h/6 * (k1v + 2 * k2v + 2 * k3v + k4v)
-        qd = np.clip(qd,-28/15*pi,28/15*pi) * 0.99
+        qd = np.clip(qd,-28/15*pi,28/15*pi) * 0.96
         # qd = np.clip(qd,-28/15*pi,28/15*pi)
         q  = q0 + qd * h
 
